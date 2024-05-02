@@ -16,6 +16,26 @@ def seuillage(img,img_mask, seuil):
     return img_out
 
 
+def seuillages_successifs (img):
+    #Cette fonction a pour but d'étudier quelle valeur de seuil est optimale
+    
+    for i in range(8):
+        seuil = 40 +10*i
+        img_out = seuillage(img,img_mask, seuil)
+
+        alpha = 240+i+1
+        plt.subplot(alpha)
+        plt.imshow(img_out)
+        title = 'Seuillage à '+ str(seuil)
+        plt.title(title)
+    plt.show()
+
+
+
+def opening(img) :
+    return 
+
+
 def my_segmentation(img, img_mask, seuil):
 
     img_out = seuillage(img,img_mask, seuil)
@@ -58,21 +78,6 @@ ACCU, RECALL, img_out_skel, GT_skel = evaluate(img_out, img_GT)
 print('Accuracy =', ACCU,', Recall =', RECALL)
 
 
-def seuillages_successifs (img):
-    
-    
-    for i in range(8):
-        seuil = 40 +10*i
-        img_out = seuillage(img,img_mask, seuil)
-
-        alpha = 240+i+1
-        plt.subplot(alpha)
-        plt.imshow(img_out)
-        title = 'Seuillage à '+ str(seuil)
-        plt.title(title)
-    plt.show()
-
-seuillages_successifs(img)
 
 
 def affichage(img,img_out,img_out_skel,img_GT,GT_skel):
@@ -93,4 +98,6 @@ def affichage(img,img_out,img_out_skel,img_GT,GT_skel):
     plt.title('Verite Terrain Squelette')
     plt.show()
 
+
+seuillages_successifs(img)
 affichage(img,img_out,img_out_skel,img_GT,GT_skel)

@@ -10,16 +10,25 @@ from skimage import data, filters
 from matplotlib import pyplot as plt
 
 
+def seuillage(img,img_mask, seuil):
+    
+    img_out = (img_mask & (img < seuil))
+    return img_out
+
 
 def my_segmentation(img, img_mask, seuil):
-    img_out = (img_mask & (img < seuil))
-    return img_in
+
+    img_out = seuillage(img,img_mask, seuil)
+
+    return img_out
+    
+
+
+
 
 def evaluate(img_out, img_GT):
-    print("evaluate")
     #marche seulement ave le changement de type 
     GT_skel = skeletonize(1.0 * img_GT) # On reduit le support de l'evaluation...
-    print("2")
     img_out_skel = skeletonize(img_out) # ...aux pixels des squelettes
     TP = np.sum(img_out_skel & img_GT) # Vrais positifs
     FP = np.sum(img_out_skel & ~img_GT) # Faux positifs
@@ -48,6 +57,24 @@ print(img_GT.shape)
 ACCU, RECALL, img_out_skel, GT_skel = evaluate(img_out, img_GT)
 print('Accuracy =', ACCU,', Recall =', RECALL)
 
+
+def seuillages_successifs (img):
+    
+    
+    for i in range(8):
+        seuil = 40 +10*i
+        img_out = seuillage(img,img_mask, seuil)
+
+        alpha = 240+i+1
+        plt.subplot(alpha)
+        plt.imshow(img_out)
+        title = 'Seuillage à '+ str(seuil)
+        plt.title(title)
+    plt.show()
+
+seuillages_successifs(img)
+
+
 def affichage(img,img_out,img_out_skel,img_GT,GT_skel):
     plt.subplot(231)
     plt.imshow(img,cmap = 'gray')
@@ -65,3 +92,5 @@ def affichage(img,img_out,img_out_skel,img_GT,GT_skel):
     plt.imshow(GT_skel)
     plt.title('Verite Terrain Squelette')
     plt.show()
+
+affichage(img,img_out,img_out_skel,img_GT,GT_skel)

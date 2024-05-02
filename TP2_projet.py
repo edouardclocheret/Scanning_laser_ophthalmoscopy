@@ -13,7 +13,7 @@ from matplotlib import pyplot as plt
 
 def my_segmentation(img, img_mask, seuil):
     img_out = (img_mask & (img < seuil))
-    return img_out
+    return img_in
 
 def evaluate(img_out, img_GT):
     print("evaluate")

@@ -30,85 +30,40 @@ def seuillages_successifs (img, img_mask):
         plt.title(title)
     plt.show()
 
-
-def top_hat (img, elem_struct) :
-    dilate = dilation(img)
-    return img ^ dilate
-
-
-def my_segmentation_test_boucles_pas_ouf(img, img_mask):
-    print("seg")
-    #Image Verite Terrain en booleen
-    img_GT =  np.asarray(Image.open('./images_IOSTAR/GT_01.png')).astype(np.bool_)
-    
-    img_out = img
-    
-    
-    seuil = 70
-    img_out = seuillage(img,img_mask,seuil)
-    ACCU, RECALL, img_out_skel, GT_skel = evaluate(img_out, img_GT)
-
-    
-    
-    print("Top_hat")
-    for i in range(1,10,1):
-        for j in range(1,10,1):
-            elem = rectangle(i,j)
-            
-
-            img_out_test= white_tophat(img,elem)
-            disk_ = disk(3)
-            img_out = closing(img_out, disk_)
-
-
-
-            ACCU_test, RECALL_test, img_out_skel, GT_skel = evaluate(img_out_test, img_GT)
-            #reconnecter les vaisseaux
-    
-            if RECALL_test > RECALL:
-                img_out = img_out +img_out_test
-                ACCU = ACCU_test
-                RECALL = RECALL_test
-                print("amelioration")
-
-            print(i,j)
-    
-    
-            
-    
-    
-
-            
-            
-    
-    
-    return img_out
-    
 def my_segmentation(img, img_mask):
 
     img_out = img
     
     
-    
-    #objectif : mettre en valeur les structures linéaires
+    #Objectif : mettre en valeur les structures linéaires
+    #On utilise donc de longs rectangles comme éléments structurants
     elem = rectangle(1,50)
     elem_2 = rectangle(50,1)
-    elem_3 = np.eye(50, dtype=bool)
-    img_out= black_tophat(img_out,elem)+black_tophat(img_out,elem_2)    
-    
-    #disk_elem = disk(2)
-    #img_out = closing(img_out, disk_elem)
-  
-    #objectif : supprimer les points isolés
-    img_out = opening(img_out, disk(2))
 
-    seuil = 20
+    #On travaille à différentes échelles pour couvrir une plus large gamme de vaisseaux
+    elem_3 = rectangle(1,5)
+    elem_4 = rectangle(5,1)
+
+    #Prend aussi en compte les elements orientés à 45 degrés
+    elem_5 = np.eye(50, dtype=bool)
+
+    #Le top hat met en évidence les éléments fins d'une image 
+    #et réduit l'importance des zones homogènes
+    img_out= black_tophat(img_out,elem)+black_tophat(img_out,elem_2) + \
+        black_tophat(img_out,elem_3)+black_tophat(img_out,elem_4)  + \
+        +black_tophat(img_out,elem_5)
+
+    
+    #Conversion de l' image en niveaux de gris en binaire 
+    seuil = 70
     img_out = seuillage(img_out,img_mask,seuil)
 
+    #Objectif : supprimer les points isolés
+    img_out = closing(img_out,disk(1))
+    img_out = opening(img_out, disk(3))
     
     
-    
-    #applique le masque
+    #Applique le masque et prend le négatif
     seuil = 1
     img_out = seuillage(img_out,img_mask,seuil)
     
@@ -116,6 +71,80 @@ def my_segmentation(img, img_mask):
     plt.show()
     
     return img_out
+
+
+def my_segmentation_optimisation(img, img_mask):
+    
+    img_GT =  np.asarray(Image.open('./images_IOSTAR/GT_01.png')).astype(np.bool_)
+    
+    img_out = img
+    elem = rectangle(1,50)
+    elem_2 = rectangle(50,1)
+    elem_3 = rectangle(1,5)
+    elem_4 = rectangle(5,1)
+    elem_5 = np.eye(50, dtype=bool)
+
+    img_out= black_tophat(img_out,elem)+black_tophat(img_out,elem_2) + \
+        black_tophat(img_out,elem_3)+black_tophat(img_out,elem_4)  + \
+        +black_tophat(img_out,elem_5)
+
+    seuil = 70
+    img_out = seuillage(img_out,img_mask,seuil)
+
+    img_out = closing(img_out,disk(1))
+    img_out = opening(img_out, disk(3))
+    seuil = 1
+    img_out = seuillage(img_out,img_mask,seuil)
+    img
+    ACCU, RECALL, img_out_skel, GT_skel = evaluate(img_out, img_GT)
+    seuil_param_best =70
+    fermeture_param_best=1
+    ouverture_param_best =3
+
+    for seuil_param in range(60,85,5):
+        for fermeture_param in range(1,6,1):
+            for ouverture_param in range(1,6,1):
+                print(seuil_param, fermeture_param, ouverture_param)
+                img_out_test = img
+                elem = rectangle(1,50)
+                elem_2 = rectangle(50,1)
+                elem_3 = rectangle(1,5)
+                elem_4 = rectangle(5,1)
+                elem_5 = np.eye(50, dtype=bool)
+
+                img_out_test= black_tophat(img_out_test,elem)+black_tophat(img_out_test,elem_2) + \
+                    black_tophat(img_out_test,elem_3)+black_tophat(img_out_test,elem_4)  + \
+                    +black_tophat(img_out_test,elem_5)
+
+                seuil = seuil_param
+                img_out_test = seuillage(img_out_test,img_mask,seuil)
+
+                img_out_test = closing(img_out_test,disk(fermeture_param))
+                img_out_test = opening(img_out_test, disk(ouverture_param))
+                
+                #pour prendre le négatif
+                seuil = 1
+                img_out_test = seuillage(img_out_test,img_mask,seuil)
+                
+                ACCU_test, RECALL_test, img_out_skel, GT_skel = evaluate(img_out, img_GT)
+    
+    
+                if RECALL_test+ACCU_test > RECALL+ACCU:
+                    img_out = img_out_test
+                    ACCU = ACCU_test
+                    RECALL = RECALL_test
+                    seuil_param_best =seuil_param
+                    fermeture_param_best=fermeture_param
+                    ouverture_param_best = ouverture_param
+
+                    print("amelioration")    
+    
+    print("Meilleurs paramètres :")
+    print("Seuil", seuil_param_best)
+    print("Rayon Fermeture", fermeture_param_best)
+    print("Rayon ouverture", ouverture_param_best)
+    return img_out
+    
 
 
 
@@ -162,14 +191,18 @@ def main() :
     invalid_pixels = ((row - nrows/2)**2 + (col - ncols/2)**2 > (nrows / 2)**2)
     img_mask[invalid_pixels] = 0
 
+
     img_out = my_segmentation(img,img_mask)
 
-    #Ouvrir l'image Verite Terrain en booleen
+    #Pour la recherche des paramètres optimaux :
+    #img_out = my_segmentation_optimisation(img,img_mask)
+
+
+    #Accuracy et recall
     img_GT =  np.asarray(Image.open('./images_IOSTAR/GT_01.png')).astype(np.bool_)
-    
     ACCU, RECALL, img_out_skel, GT_skel = evaluate(img_out, img_GT)
     
-
+    #Afichage du squelette, vérité terrain etc
     #affichage_my_seg(img,img_out,img_out_skel,img_GT,GT_skel)
     print("Accuracy = ", ACCU, "Recall =", RECALL)
     

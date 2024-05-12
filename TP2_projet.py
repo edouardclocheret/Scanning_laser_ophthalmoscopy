@@ -52,7 +52,6 @@ def my_segmentation(img, img_mask):
     img_out= black_tophat(img_out,elem)+black_tophat(img_out,elem_2) + \
         black_tophat(img_out,elem_3)+black_tophat(img_out,elem_4)  + \
         +black_tophat(img_out,elem_5)
-
     
     #Conversion de l' image en niveaux de gris en binaire 
     seuil = 70
@@ -61,7 +60,6 @@ def my_segmentation(img, img_mask):
     #Objectif : supprimer les points isolés
     img_out = closing(img_out,disk(1))
     img_out = opening(img_out, disk(3))
-    
     
     #Applique le masque et prend le négatif
     seuil = 1
@@ -203,7 +201,7 @@ def main() :
     ACCU, RECALL, img_out_skel, GT_skel = evaluate(img_out, img_GT)
     
     #Afichage du squelette, vérité terrain etc
-    #affichage_my_seg(img,img_out,img_out_skel,img_GT,GT_skel)
+    affichage_my_seg(img,img_out,img_out_skel,img_GT,GT_skel)
     print("Accuracy = ", ACCU, "Recall =", RECALL)
     
 
